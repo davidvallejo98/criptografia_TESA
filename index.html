@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cifrados Clásicos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<div class="container py-5">
+  <h1 class="text-center mb-4">Herramientas de Cifrado Clásico</h1>
+
+  <div class="card shadow">
+    <div class="card-body">
+
+      <!-- Selección de algoritmo -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Algoritmo</label>
+        <select id="algorithm" class="form-select">
+          <option value="caesar">Cifrado César</option>
+          <option value="vigenere">Cifrado Vigenére</option>
+          <option value="atbash">Cifrado Atbash</option>
+          <option value="columnar">Transposición Columnar</option>
+        </select>
+      </div>
+
+      <!-- Texto -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Texto</label>
+        <textarea id="text" class="form-control" rows="4" placeholder="Ingrese el texto..."></textarea>
+      </div>
+
+      <!-- Clave -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Clave / Parámetro</label>
+        <input id="key" class="form-control" placeholder="Ej: 3, CLAVE, 4">
+        <div class="form-text">No requerido para Atbash</div>
+      </div>
+
+      <!-- Botones -->
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary" onclick="encrypt()">Cifrar</button>
+        <button class="btn btn-secondary" onclick="decrypt()">Descifrar</button>
+      </div>
+
+      <!-- Resultado -->
+      <div class="alert alert-info mt-4" id="result" role="alert"></div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// Cifrado César funcion
+function caesar(text, shift) {
+  if (isNaN(shift)) return "Clave inválida";
+
+  return text.replace(/[A-Za-z]/g, c => {
+    const code = c.charCodeAt(0);
+
+    // Mayúsculas
+    if (code >= 65 && code <= 90) {
+      return String.fromCharCode((code - 65 + shift + 26) % 26 + 65);
+    }
+
+    // Minúsculas
+    if (code >= 97 && code <= 122) {
+      return String.fromCharCode((code - 97 + shift + 26) % 26 + 97);
+    }
+
+    return c;
+  });
+}
+
+// Funcion Cifrado VIGENÈRE 
+function vigenere(text, key, decrypt = false) {
+  if (!key) return "Clave inválida";
+  key = key.toUpperCase().replace(/[^A-Z]/g, "");
+  let j = 0;
+
+  return text.replace(/[A-Za-z]/g, c => {
+    const base = c <= 'Z' ? 65 : 97;
+    const k = key[j % key.length].charCodeAt(0) - 65;
+    j++;
+
+    return String.fromCharCode(
+      (c.charCodeAt(0) - base + (decrypt ? -k : k) + 26) % 26 + base
+    );
+  });
+}
+
+// Funcion Cifrado ATBASH 
+function atbash(text) {
+  return text.replace(/[A-Za-z]/g, c => {
+    const base = c <= 'Z' ? 65 : 97;
+    return String.fromCharCode(base + (25 - (c.charCodeAt(0) - base)));
+  });
+}
+
+// Funcion Cifrado TRANSPOSICIÓN COLUMNAR 
+function columnarEncrypt(text, cols) {
+  if (isNaN(cols) || cols <= 0) return "Clave inválida";
+
+  let rows = Math.ceil(text.length / cols);
+  let grid = Array.from({ length: rows }, () => Array(cols).fill(''));
+  let i = 0;
+
+  for (let r = 0; r < rows; r++)
+    for (let c = 0; c < cols; c++)
+      if (i < text.length) grid[r][c] = text[i++];
+
+  return grid[0].map((_, c) => grid.map(r => r[c] || '').join('')).join('');
+}
+
+// Funcion Validad Claves 
+
+function columnarDecrypt(text, cols) {
+  if (isNaN(cols) || cols <= 0) return "Clave inválida";
+
+  let rows = Math.ceil(text.length / cols);
+  let shortCols = cols * rows - text.length;
+  let grid = Array.from({ length: rows }, () => Array(cols).fill(''));
+  let i = 0;
+
+  for (let c = 0; c < cols; c++) {
+    let limit = rows - (c >= cols - shortCols ? 1 : 0);
+    for (let r = 0; r < limit; r++) {
+      grid[r][c] = text[i++];
+    }
+  }
+
+  return grid.map(r => r.join('')).join('');
+}
+
+
+function encrypt() {
+  const alg = algorithm.value;
+  const t = text.value;
+  const k = key.value;
+  let r = '';
+
+  if (alg === 'caesar') r = caesar(t, parseInt(k));
+  if (alg === 'vigenere') r = vigenere(t, k);
+  if (alg === 'atbash') r = atbash(t);
+  if (alg === 'columnar') r = columnarEncrypt(t, parseInt(k));
+
+  result.innerText = r;
+}
+
+function decrypt() {
+  const alg = algorithm.value;
+  const t = text.value;
+  const k = key.value;
+  let r = '';
+
+  if (alg === 'caesar') r = caesar(t, -parseInt(k));
+  if (alg === 'vigenere') r = vigenere(t, k, true);
+  if (alg === 'atbash') r = atbash(t);
+  if (alg === 'columnar') r = columnarDecrypt(t, parseInt(k));
+
+  result.innerText = r;
+}
+</script>
+<!-- Informacion -->
+<div class="container pb-5">
+  <div class="card border-info shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title text-info fw-bold">Uso de Clave / Parámetro</h5>
+      <p class="card-text mb-2">
+        El campo <strong>Clave / Parámetro</strong> debe completarse según el tipo de cifrado seleccionado:
+      </p>
+      <ul class="mb-0">
+        <li><strong>Cifrado César:</strong> número de desplazamiento (ej. <code>3</code>).</li>
+        <li><strong>Cifrado Vigenère:</strong> clave de texto (ej. <code>CLAVE</code>).</li>
+        <li><strong>Cifrado Atbash:</strong> no requiere clave.</li>
+        <li><strong>Transposición Columnar:</strong> número de columnas (ej. <code>4</code>).</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
