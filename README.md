@@ -8,7 +8,7 @@ URL pública
 
 **Aplicación desplegada en:**
 `critptografia-david-vallejo.infinityfreeapp.com`
-🧩 Algoritmos implementados
+Algoritmos implementados
 
 La aplicación incluye los siguientes métodos de cifrado y descifrado:
 
