@@ -54,66 +54,94 @@
 
 <script>
 // Cifrado César funcion
-function caesar(text, shift) {
-  if (isNaN(shift)) return "Clave inválida";
+function caesar(text, shift) {                 // Define la función César con texto y desplazamiento
+  if (isNaN(shift)) return "Clave inválida";   // Valida que la clave sea numérica
 
-  return text.replace(/[A-Za-z]/g, c => {
-    const code = c.charCodeAt(0);
+  return text.replace(/[A-Za-z]/g, c => {      // Reemplaza solo letras mayúsculas y minúsculas
+    const code = c.charCodeAt(0);              // Obtiene el código ASCII del carácter
 
     // Mayúsculas
-    if (code >= 65 && code <= 90) {
-      return String.fromCharCode((code - 65 + shift + 26) % 26 + 65);
+    if (code >= 65 && code <= 90) {             // Verifica si el carácter es una letra mayúscula
+      return String.fromCharCode(               // Convierte el nuevo código ASCII a carácter
+        (code - 65 + shift + 26) % 26 + 65      // Aplica el desplazamiento con manejo circular
+      );
     }
 
     // Minúsculas
-    if (code >= 97 && code <= 122) {
-      return String.fromCharCode((code - 97 + shift + 26) % 26 + 97);
+    if (code >= 97 && code <= 122) {            // Verifica si el carácter es una letra minúscula
+      return String.fromCharCode(               // Convierte el nuevo código ASCII a carácter
+        (code - 97 + shift + 26) % 26 + 97      // Aplica el desplazamiento con manejo circular
+      );
     }
 
-    return c;
+    return c;                                   // Devuelve el carácter sin cambios si no es letra
   });
 }
 
 // Funcion Cifrado VIGENÈRE 
-function vigenere(text, key, decrypt = false) {
-  if (!key) return "Clave inválida";
-  key = key.toUpperCase().replace(/[^A-Z]/g, "");
-  let j = 0;
+function vigenere(text, key, decrypt = false) { // Define la función Vigenère (cifrar/descifrar)
+  if (!key) return "Clave inválida";             // Valida que exista una clave
+  key = key.toUpperCase().replace(/[^A-Z]/g, ""); // Convierte la clave a mayúsculas y elimina no letras
+  let j = 0;                                     // Índice para recorrer la clave
 
-  return text.replace(/[A-Za-z]/g, c => {
-    const base = c <= 'Z' ? 65 : 97;
-    const k = key[j % key.length].charCodeAt(0) - 65;
-    j++;
+  return text.replace(/[A-Za-z]/g, c => {        // Reemplaza solo caracteres alfabéticos
+    const base = c <= 'Z' ? 65 : 97;              // Determina si es mayúscula o minúscula
+    const k = key[j % key.length].charCodeAt(0) - 65; // Obtiene el desplazamiento desde la clave
+    j++;                                          // Avanza al siguiente carácter de la clave
 
-    return String.fromCharCode(
+    return String.fromCharCode(                   // Convierte el nuevo código ASCII a carácter
       (c.charCodeAt(0) - base + (decrypt ? -k : k) + 26) % 26 + base
+                                                     // Aplica cifrado o descifrado según el parámetro
     );
   });
 }
 
 // Funcion Cifrado ATBASH 
-function atbash(text) {
-  return text.replace(/[A-Za-z]/g, c => {
-    const base = c <= 'Z' ? 65 : 97;
-    return String.fromCharCode(base + (25 - (c.charCodeAt(0) - base)));
+function atbash(text) {                           // Define la función Atbash
+  return text.replace(/[A-Za-z]/g, c => {         // Reemplaza solo letras
+    const base = c <= 'Z' ? 65 : 97;               // Determina si es mayúscula o minúscula
+    return String.fromCharCode(                    // Convierte el código ASCII a carácter
+      base + (25 - (c.charCodeAt(0) - base))       // Aplica el alfabeto invertido
+    );
   });
 }
 
 // Funcion Cifrado TRANSPOSICIÓN COLUMNAR 
-function columnarEncrypt(text, cols) {
-  if (isNaN(cols) || cols <= 0) return "Clave inválida";
+function columnarEncrypt(text, cols) {             // Define la función de cifrado columnar
+  if (isNaN(cols) || cols <= 0) return "Clave inválida"; // Valida que las columnas sean válidas
 
-  let rows = Math.ceil(text.length / cols);
-  let grid = Array.from({ length: rows }, () => Array(cols).fill(''));
-  let i = 0;
+  let rows = Math.ceil(text.length / cols);        // Calcula el número de filas necesarias
+  let grid = Array.from({ length: rows }, () => Array(cols).fill('')); // Crea la matriz vacía
+  let i = 0;                                       // Índice para recorrer el texto
 
-  for (let r = 0; r < rows; r++)
-    for (let c = 0; c < cols; c++)
-      if (i < text.length) grid[r][c] = text[i++];
+  for (let r = 0; r < rows; r++)                   // Recorre las filas
+    for (let c = 0; c < cols; c++)                 // Recorre las columnas
+      if (i < text.length) grid[r][c] = text[i++]; // Inserta caracteres en la matriz
 
-  return grid[0].map((_, c) => grid.map(r => r[c] || '').join('')).join('');
+  return grid[0].map((_, c) =>                     // Recorre columnas
+    grid.map(r => r[c] || '').join('')             // Lee la matriz por columnas
+  ).join('');                                      // Une el resultado final
 }
 
+// Funcion Validad Claves 
+
+function columnarDecrypt(text, cols) {              // Define la función de descifrado columnar
+  if (isNaN(cols) || cols <= 0) return "Clave inválida"; // Valida la clave
+
+  let rows = Math.ceil(text.length / cols);         // Calcula el número de filas
+  let shortCols = cols * rows - text.length;        // Calcula columnas incompletas
+  let grid = Array.from({ length: rows }, () => Array(cols).fill('')); // Crea la matriz vacía
+  let i = 0;                                        // Índice para recorrer el texto cifrado
+
+  for (let c = 0; c < cols; c++) {                  // Recorre columnas
+    let limit = rows - (c >= cols - shortCols ? 1 : 0); // Ajusta filas para columnas cortas
+    for (let r = 0; r < limit; r++) {               // Recorre filas válidas
+      grid[r][c] = text[i++];                       // Inserta caracteres en la matriz
+    }
+  }
+
+  return grid.map(r => r.join('')).join('');        // Reconstruye el texto original por filas
+}
 // Funcion Validad Claves 
 
 function columnarDecrypt(text, cols) {
@@ -183,3 +211,4 @@ function decrypt() {
 
 </body>
 </html>
+
